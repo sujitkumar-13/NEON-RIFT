@@ -6,10 +6,12 @@ class GameStateManager {
   constructor() {
     this.listeners = new Set();
     this.hudListeners = new Set();
+    this.portalWarned = false;
     this.resetState();
   }
 
   resetState() {
+    this.portalWarned = false;
     this.state = {
       phase: 'MENU', // 'MENU' | 'PLAYING' | 'PAUSED' | 'GAME_OVER' | 'VICTORY'
       sector: 'NEON_CITY', // 'NEON_CITY' | 'PORTAL_WARP' | 'RIFT_WORLD' | 'FINAL_ESCAPE'
@@ -29,6 +31,7 @@ class GameStateManager {
       rivalDistanceOffset: 35, // starts 35m ahead
       portalProgress: 0,
       cameraShake: 0,
+      invulnerableTimer: 0,
       timeElapsed: 0,
       maxSpeedReached: 0,
       nitroUsedCount: 0,
@@ -43,13 +46,11 @@ class GameStateManager {
     return this.state;
   }
 
-  // Subscribe to major state changes (phases, sectors, game over)
   subscribe(fn) {
     this.listeners.add(fn);
     return () => this.listeners.delete(fn);
   }
 
-  // Subscribe to high-frequency HUD telemetry updates (speed, nitro, shield, score)
   subscribeHUD(fn) {
     this.hudListeners.add(fn);
     return () => this.hudListeners.delete(fn);
@@ -134,9 +135,13 @@ class GameStateManager {
   }
 
   triggerImpact(damage = PHYSICS.SHIELD_DAMAGE_CRASH) {
+    // If player is currently in invulnerability recovery grace period, ignore hit
+    if (this.state.invulnerableTimer > 0) return;
+
     this.state.shield = Math.max(0, this.state.shield - damage);
-    this.state.speed = Math.max(15, this.state.speed * 0.45);
-    this.state.cameraShake = 1.0;
+    this.state.speed = Math.max(26, this.state.speed * 0.72);
+    this.state.cameraShake = 0.22;
+    this.state.invulnerableTimer = 1.3; // 1.3s recovery window
     this.state.impactFlash = true;
 
     soundManager.playCollision();
@@ -144,7 +149,7 @@ class GameStateManager {
     setTimeout(() => {
       this.state.impactFlash = false;
       this.notifyHUD();
-    }, 250);
+    }, 220);
 
     if (this.state.shield <= 0) {
       this.setPhase('GAME_OVER');
@@ -157,7 +162,7 @@ class GameStateManager {
     if (this.state.sector === 'PORTAL_WARP' || this.state.sector === 'RIFT_WORLD') return;
     this.state.sector = 'PORTAL_WARP';
     this.state.warpFlashIntensity = 1.0;
-    this.state.cameraShake = 1.5;
+    this.state.cameraShake = 0.35;
     this.setAnnouncement('DIMENSIONAL HORIZON BREACHED! ENTERING RIFT VOID', 4000);
     soundManager.playPortalWarp();
     this.notifyMajor();
@@ -186,11 +191,16 @@ class GameStateManager {
     const s = this.state;
     s.timeElapsed += delta;
 
+    // Decrement invulnerability timer
+    if (s.invulnerableTimer > 0) {
+      s.invulnerableTimer = Math.max(0, s.invulnerableTimer - delta);
+    }
+
     // Throttle / Brake / Boost calculations
     let targetSpeed;
     const isAccelerating = controls.forward;
     const isBraking = controls.backward;
-    const wantsBoost = controls.boost && s.nitro > 5;
+    const wantsBoost = controls.boost && s.nitro > 4;
     const isDrifting = controls.drift;
 
     if (wantsBoost) {
@@ -198,7 +208,7 @@ class GameStateManager {
       s.isBoosting = true;
       s.nitro = Math.max(0, s.nitro - PHYSICS.NITRO_CONSUMPTION * delta);
       s.nitroUsedCount += delta;
-      s.cameraShake = Math.max(s.cameraShake, 0.15);
+      s.cameraShake = Math.max(s.cameraShake, 0.08);
       s.score += Math.round(180 * delta);
     } else {
       s.isBoosting = false;
@@ -211,7 +221,7 @@ class GameStateManager {
         targetSpeed = PHYSICS.MAX_SPEED;
         s.score += Math.round(100 * delta);
       } else if (isBraking) {
-        targetSpeed = 12;
+        targetSpeed = 16;
       } else {
         targetSpeed = PHYSICS.BASE_SPEED;
         s.score += Math.round(50 * delta);
@@ -219,7 +229,10 @@ class GameStateManager {
     }
 
     // Accelerate or decelerate smoothly towards target
-    const accelRate = s.isBoosting ? PHYSICS.NITRO_ACCEL : (isAccelerating ? PHYSICS.ACCELERATION : (isBraking ? PHYSICS.BRAKING : PHYSICS.NATURAL_DECEL));
+    const accelRate = s.isBoosting
+      ? PHYSICS.NITRO_ACCEL
+      : (isAccelerating ? PHYSICS.ACCELERATION : (isBraking ? PHYSICS.BRAKING : PHYSICS.NATURAL_DECEL));
+
     if (s.speed < targetSpeed) {
       s.speed = Math.min(targetSpeed, s.speed + accelRate * delta);
     } else if (s.speed > targetSpeed) {
@@ -245,9 +258,9 @@ class GameStateManager {
     s.playerX = Math.max(-PHYSICS.MAX_STEER_X, Math.min(PHYSICS.MAX_STEER_X, s.playerX));
 
     // Car visual attitude lerping
-    const targetYaw = -steerInput * (isDrifting ? 0.38 : 0.22);
-    const targetRoll = -steerInput * (isDrifting ? 0.25 : 0.14);
-    const targetPitch = isBraking ? 0.08 : (s.isBoosting ? -0.06 : (isAccelerating ? -0.03 : 0));
+    const targetYaw = -steerInput * (isDrifting ? 0.36 : 0.20);
+    const targetRoll = -steerInput * (isDrifting ? 0.22 : 0.12);
+    const targetPitch = isBraking ? 0.06 : (s.isBoosting ? -0.05 : (isAccelerating ? -0.02 : 0));
 
     s.carYaw += (targetYaw - s.carYaw) * Math.min(1, delta * PHYSICS.STEER_LERP);
     s.carRoll += (targetRoll - s.carRoll) * Math.min(1, delta * PHYSICS.STEER_LERP);
@@ -261,7 +274,7 @@ class GameStateManager {
     // Longitudinal advance
     const distDelta = s.speed * delta;
     s.distance += distDelta;
-    s.playerZ -= distDelta; // Car moves in -Z direction or road moves past
+    s.playerZ -= distDelta;
 
     // Camera shake decay
     if (s.cameraShake > 0) {
@@ -276,7 +289,7 @@ class GameStateManager {
       }
     }
 
-    // Portal warp trigger
+    // Portal warp trigger (reachable at 1250m)
     if (s.distance >= GAME_SECTORS.NEON_CITY.endDist && s.sector === 'NEON_CITY') {
       this.triggerWarp();
     }
@@ -294,8 +307,7 @@ class GameStateManager {
     }
 
     // Rival car AI progress
-    // Rival maintains a relative position with dynamic rubber-banding
-    const rivalBaseSpeed = s.sector === 'RIFT_WORLD' ? 62 : 55;
+    const rivalBaseSpeed = s.sector === 'RIFT_WORLD' ? 64 : 56;
     const rivalSpeedDelta = (rivalBaseSpeed - s.speed) * delta;
     s.rivalDistanceOffset = Math.max(-50, Math.min(80, s.rivalDistanceOffset + rivalSpeedDelta));
 

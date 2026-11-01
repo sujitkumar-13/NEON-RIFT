@@ -1,4 +1,4 @@
-// NEON RIFT - High-Tech Cyberpunk In-Game HUD
+// NEON RIFT - High-Tech Cyberpunk In-Game HUD (Non-Overlapping Layout)
 import { useEffect, useState } from 'react';
 import { gameState } from '../gameplay/gameState';
 import { soundManager } from '../utils/audioSynthesizer';
@@ -9,7 +9,7 @@ export function HUD() {
   const [isMuted, setIsMuted] = useState(soundManager.isMuted);
 
   useEffect(() => {
-    // High-frequency subscription for smooth 60fps numbers & bars
+    // High-frequency subscription for smooth 60fps telemetry
     const unsubscribe = gameState.subscribeHUD((state) => {
       setTelemetry({ ...state });
     });
@@ -55,7 +55,7 @@ export function HUD() {
         <div className="hud-progress-container">
           <div className="hud-progress-labels">
             <span>START</span>
-            <span>PORTAL (1.3KM)</span>
+            <span>RIFT PORTAL</span>
             <span>EXODUS</span>
           </div>
           <div className="hud-progress-track">
@@ -68,7 +68,7 @@ export function HUD() {
           </div>
         </div>
 
-        {/* Action Controls (Pause / Audio) */}
+        {/* Top Actions: Audio & Pause */}
         <div className="hud-top-actions">
           <button
             className="hud-icon-btn"
@@ -109,63 +109,70 @@ export function HUD() {
         </span>
       </div>
 
-      {/* Bottom Gauges Dashboard */}
-      <div className="hud-bottom-dashboard">
-        {/* Left Gauge: Shield / Integrity */}
-        <div className="hud-panel shield-panel">
-          <div className="panel-header">
-            <span className="panel-title">HULL INTEGRITY</span>
-            <span className={`panel-val ${isCriticalShield ? 'critical' : ''}`}>
-              {Math.round(telemetry.shield)}%
-            </span>
+      {/* Split Bottom Dashboard: Left and Right corners only, leaving the center 100% open for the car! */}
+      <div className="hud-bottom-split">
+        {/* BOTTOM LEFT: Hull Shield Integrity & Race Metrics */}
+        <div className="hud-corner-group hud-corner-left">
+          <div className="hud-panel shield-panel">
+            <div className="panel-header">
+              <span className="panel-title">HULL INTEGRITY</span>
+              <span className={`panel-val ${isCriticalShield ? 'critical' : ''}`}>
+                {Math.round(telemetry.shield)}%
+              </span>
+            </div>
+            <div className="meter-track">
+              <div
+                className={`meter-fill shield-fill ${isCriticalShield ? 'critical' : ''}`}
+                style={{ width: `${telemetry.shield}%` }}
+              />
+            </div>
+            {isCriticalShield && (
+              <div className="shield-warning-text">⚠️ CRITICAL DAMAGE DETECTED</div>
+            )}
           </div>
-          <div className="meter-track">
-            <div
-              className={`meter-fill shield-fill ${isCriticalShield ? 'critical' : ''}`}
-              style={{ width: `${telemetry.shield}%` }}
-            />
-          </div>
-          {isCriticalShield && (
-            <div className="shield-warning-text">⚠️ CRITICAL DAMAGE DETECTED</div>
-          )}
-        </div>
 
-        {/* Center: Digital Speedometer */}
-        <div className="hud-panel speed-panel">
-          <div className="speed-number-container">
-            <span className={`speed-digits ${telemetry.isBoosting ? 'boosting' : ''}`}>
-              {telemetry.kmh}
-            </span>
-            <span className="speed-unit">KM/H</span>
-          </div>
-          <div className="speed-sub-metrics">
-            <div className="metric-col">
-              <span className="metric-lbl">DISTANCE</span>
+          <div className="hud-panel mini-metrics-panel">
+            <div className="metric-row">
+              <span className="metric-lbl">DISTANCE:</span>
               <span className="metric-val">{Math.round(telemetry.distance)} M</span>
             </div>
-            <div className="metric-col">
-              <span className="metric-lbl">SCORE</span>
-              <span className="metric-val">{telemetry.score}</span>
+            <div className="metric-row">
+              <span className="metric-lbl">SCORE:</span>
+              <span className="metric-val highlight-score">{telemetry.score}</span>
             </div>
           </div>
         </div>
 
-        {/* Right Gauge: Nitro Boost System */}
-        <div className="hud-panel nitro-panel">
-          <div className="panel-header">
-            <span className="panel-title">NITRO OVERDRIVE</span>
-            <span className={`panel-val ${telemetry.isBoosting ? 'boosting' : ''}`}>
-              {telemetry.isBoosting ? 'BOOSTING' : `${Math.round(telemetry.nitro)}%`}
-            </span>
+        {/* CENTER IS EMPTY: Complete unobstructed view of hero car, wheels, thrusters and road! */}
+        <div className="hud-center-clearance" />
+
+        {/* BOTTOM RIGHT: Speedometer & Nitro Overdrive */}
+        <div className="hud-corner-group hud-corner-right">
+          <div className="hud-panel speed-panel-corner">
+            <div className="speed-number-container">
+              <span className={`speed-digits ${telemetry.isBoosting ? 'boosting' : ''}`}>
+                {telemetry.kmh}
+              </span>
+              <span className="speed-unit">KM/H</span>
+            </div>
           </div>
-          <div className="meter-track">
-            <div
-              className={`meter-fill nitro-fill ${telemetry.isBoosting ? 'boosting' : ''}`}
-              style={{ width: `${telemetry.nitro}%` }}
-            />
-          </div>
-          <div className="nitro-hint">
-            {telemetry.nitro > 10 ? '[SPACE] TO BOOST' : 'CHARGING CORES...'}
+
+          <div className="hud-panel nitro-panel">
+            <div className="panel-header">
+              <span className="panel-title">NITRO OVERDRIVE</span>
+              <span className={`panel-val ${telemetry.isBoosting ? 'boosting' : ''}`}>
+                {telemetry.isBoosting ? 'BOOSTING' : `${Math.round(telemetry.nitro)}%`}
+              </span>
+            </div>
+            <div className="meter-track">
+              <div
+                className={`meter-fill nitro-fill ${telemetry.isBoosting ? 'boosting' : ''}`}
+                style={{ width: `${telemetry.nitro}%` }}
+              />
+            </div>
+            <div className="nitro-hint">
+              {telemetry.nitro > 10 ? '[SPACE] TO BOOST' : 'CHARGING CORES...'}
+            </div>
           </div>
         </div>
       </div>

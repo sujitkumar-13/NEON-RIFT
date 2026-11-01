@@ -471,21 +471,78 @@
   text-shadow: 0 0 10px var(--color-cyan);
 }
 
-/* HUD Bottom Dashboard */
-.hud-bottom-dashboard {
+/* Split Bottom Dashboard: Left and Right corners only - Leaves center 100% unobstructed */
+.hud-bottom-split {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  gap: 20px;
+  width: 100%;
+  pointer-events: none;
+}
+
+.hud-corner-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: auto;
+  min-width: 220px;
+  max-width: 260px;
+}
+
+.hud-corner-left {
+  align-items: flex-start;
+}
+
+.hud-corner-right {
+  align-items: flex-end;
+}
+
+.hud-center-clearance {
+  flex: 1;
+  pointer-events: none;
+  min-height: 40px;
 }
 
 .hud-panel {
-  background: rgba(10, 14, 22, 0.85);
-  border: 1px solid rgba(0, 243, 255, 0.25);
+  background: rgba(10, 14, 22, 0.88);
+  border: 1px solid rgba(0, 243, 255, 0.3);
   border-radius: 6px;
-  padding: 14px 20px;
-  backdrop-filter: blur(6px);
-  min-width: 220px;
+  padding: 10px 16px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  width: 100%;
+}
+
+.mini-metrics-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+}
+
+.metric-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.metric-lbl {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 1.5px;
+  color: #7b8ba4;
+}
+
+.metric-val {
+  font-family: var(--font-title);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.highlight-score {
+  color: var(--color-cyan);
+  text-shadow: 0 0 8px var(--color-cyan-glow);
 }
 
 .panel-header {
@@ -493,10 +550,10 @@
   justify-content: space-between;
   align-items: center;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   letter-spacing: 2px;
   color: #8c9eb5;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .panel-val {
@@ -516,7 +573,7 @@
 
 .meter-track {
   width: 100%;
-  height: 10px;
+  height: 8px;
   background: rgba(18, 24, 38, 0.9);
   border-radius: 2px;
   overflow: hidden;
@@ -540,9 +597,9 @@
 
 .shield-warning-text {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--color-hazard);
-  margin-top: 6px;
+  margin-top: 5px;
   letter-spacing: 1px;
   font-weight: 700;
 }
@@ -562,18 +619,17 @@
   font-size: 0.65rem;
   letter-spacing: 1.5px;
   color: #7b8ba4;
-  margin-top: 6px;
+  margin-top: 5px;
   text-align: right;
 }
 
-/* Speedometer Panel */
-.speed-panel {
+/* Speedometer Panel - Relocated to Bottom Right Corner */
+.speed-panel-corner {
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  border-color: rgba(176, 38, 255, 0.35);
-  padding: 12px 32px;
-  min-width: 260px;
+  border-color: rgba(176, 38, 255, 0.4);
+  padding: 8px 16px;
 }
 
 .speed-number-container {
@@ -584,7 +640,7 @@
 
 .speed-digits {
   font-family: var(--font-title);
-  font-size: 3.5rem;
+  font-size: 2.8rem;
   font-weight: 900;
   line-height: 1;
   color: #fff;
@@ -599,39 +655,10 @@
 
 .speed-unit {
   font-family: var(--font-mono);
-  font-size: 1rem;
+  font-size: 0.9rem;
   letter-spacing: 2px;
   color: var(--color-cyan);
   font-weight: 700;
-}
-
-.speed-sub-metrics {
-  display: flex;
-  justify-content: space-around;
-  width: 100%;
-  margin-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding-top: 6px;
-}
-
-.metric-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.metric-lbl {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 1.5px;
-  color: #7b8ba4;
-}
-
-.metric-val {
-  font-family: var(--font-title);
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #fff;
 }
 
 /* ==========================================================================
@@ -904,7 +931,7 @@
    ========================================================================== */
 .touch-controls-container {
   position: absolute;
-  bottom: 20px;
+  bottom: 85px;
   left: 20px;
   right: 20px;
   display: flex;

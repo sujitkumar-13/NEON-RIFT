@@ -10,6 +10,11 @@ import { COLORS, HERO_CAR_MODEL_PATH } from '../utils/constants';
 export function RivalCar() {
   const groupRef = useRef();
   const carBodyRef = useRef();
+  const wheelFL = useRef();
+  const wheelFR = useRef();
+  const wheelRL = useRef();
+  const wheelRR = useRef();
+
   const { scene } = useGLTF(HERO_CAR_MODEL_PATH);
 
   // Duplicate hero car with distinct electric purple & crimson cyber styling
@@ -22,13 +27,13 @@ export function RivalCar() {
         node.receiveShadow = true;
         if (node.material) {
           node.material = node.material.clone();
-          // Dark metallic graphite finish with crimson/purple sheen
-          node.material.color = new THREE.Color(0x221133);
-          node.material.metalness = 0.95;
-          node.material.roughness = 0.25;
+          // Vibrant dark obsidian with purple metallic sheen
+          node.material.color = new THREE.Color(0x38184c);
+          node.material.metalness = 0.35;
+          node.material.roughness = 0.28;
           if (node.material.emissive) {
             node.material.emissive = new THREE.Color(0x9d11ff);
-            node.material.emissiveIntensity = 0.35;
+            node.material.emissiveIntensity = 0.45;
           }
         }
       }
@@ -38,7 +43,7 @@ export function RivalCar() {
 
   // AI lane weaving and position tracking
   const aiState = useRef({
-    currentLaneIndex: 1, // 0, 1, or 2
+    currentLaneIndex: 1,
     currentX: 0,
     targetX: 0,
     laneChangeTimer: 2.0,
@@ -58,14 +63,12 @@ export function RivalCar() {
     groupRef.current.visible = true;
 
     // Relative distance offset ahead of or behind player
-    // player is at Z = 0, so rival is at -s.rivalDistanceOffset
     const targetZ = -s.rivalDistanceOffset;
 
     // AI Lane Switching Logic
     aiState.current.laneChangeTimer -= delta;
     if (aiState.current.laneChangeTimer <= 0) {
       aiState.current.laneChangeTimer = 3.0 + Math.random() * 4.0;
-      // Pick a lane
       const lanes = [-5.2, 0, 5.2];
       aiState.current.targetX = lanes[Math.floor(Math.random() * lanes.length)];
     }
@@ -79,13 +82,20 @@ export function RivalCar() {
     // Position rival
     groupRef.current.position.set(
       aiState.current.currentX,
-      0.38,
+      0.42,
       targetZ
     );
 
     if (carBodyRef.current) {
       carBodyRef.current.rotation.y = Math.PI + aiState.current.yaw;
     }
+
+    // Wheel rotation
+    const rotSpeed = s.speed * delta * 5.0;
+    if (wheelFL.current) wheelFL.current.rotation.x += rotSpeed;
+    if (wheelFR.current) wheelFR.current.rotation.x += rotSpeed;
+    if (wheelRL.current) wheelRL.current.rotation.x += rotSpeed;
+    if (wheelRR.current) wheelRR.current.rotation.x += rotSpeed;
   });
 
   return (
@@ -94,18 +104,71 @@ export function RivalCar() {
         {rivalScene && (
           <primitive
             object={rivalScene}
-            scale={[3.2, 3.2, 3.2]}
+            scale={[3.5, 3.5, 3.5]}
             position={[0, 0, 0]}
           />
         )}
 
+        {/* Dedicated Rival Purple Key & Rim Lights */}
+        <pointLight
+          position={[0, 2.5, 1.2]}
+          intensity={3.0}
+          color={COLORS.purpleNeon}
+          distance={8}
+        />
+
+        {/* 4 Cybernetic Wheels with Glowing Purple Rims */}
+        <group ref={wheelFL} position={[-0.78, 0.14, -0.92]}>
+          <mesh rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.24, 0.24, 0.14, 16]} />
+            <meshStandardMaterial color="#121722" roughness={0.3} metalness={0.7} />
+          </mesh>
+          <mesh position={[-0.08, 0, 0]} rotation={[0, -Math.PI / 2, 0]}>
+            <ringGeometry args={[0.15, 0.23, 16]} />
+            <meshBasicMaterial color={COLORS.purpleNeon} side={THREE.DoubleSide} />
+          </mesh>
+        </group>
+
+        <group ref={wheelFR} position={[0.78, 0.14, -0.92]}>
+          <mesh rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.24, 0.24, 0.14, 16]} />
+            <meshStandardMaterial color="#121722" roughness={0.3} metalness={0.7} />
+          </mesh>
+          <mesh position={[0.08, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
+            <ringGeometry args={[0.15, 0.23, 16]} />
+            <meshBasicMaterial color={COLORS.purpleNeon} side={THREE.DoubleSide} />
+          </mesh>
+        </group>
+
+        <group ref={wheelRL} position={[-0.78, 0.14, 1.05]}>
+          <mesh rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.24, 0.24, 0.14, 16]} />
+            <meshStandardMaterial color="#121722" roughness={0.3} metalness={0.7} />
+          </mesh>
+          <mesh position={[-0.08, 0, 0]} rotation={[0, -Math.PI / 2, 0]}>
+            <ringGeometry args={[0.15, 0.23, 16]} />
+            <meshBasicMaterial color={COLORS.purpleNeon} side={THREE.DoubleSide} />
+          </mesh>
+        </group>
+
+        <group ref={wheelRR} position={[0.78, 0.14, 1.05]}>
+          <mesh rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.24, 0.24, 0.14, 16]} />
+            <meshStandardMaterial color="#121722" roughness={0.3} metalness={0.7} />
+          </mesh>
+          <mesh position={[0.08, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
+            <ringGeometry args={[0.15, 0.23, 16]} />
+            <meshBasicMaterial color={COLORS.purpleNeon} side={THREE.DoubleSide} />
+          </mesh>
+        </group>
+
         {/* Rival purple neon taillight thrusters */}
-        <mesh position={[-0.45, 0.25, 1.65]} rotation={[Math.PI / 2, 0, 0]}>
-          <coneGeometry args={[0.07, 0.7, 8]} />
+        <mesh position={[-0.48, 0.28, 1.68]} rotation={[Math.PI / 2, 0, 0]}>
+          <coneGeometry args={[0.08, 0.8, 8]} />
           <meshBasicMaterial color={COLORS.purpleNeon} />
         </mesh>
-        <mesh position={[0.45, 0.25, 1.65]} rotation={[Math.PI / 2, 0, 0]}>
-          <coneGeometry args={[0.07, 0.7, 8]} />
+        <mesh position={[0.48, 0.28, 1.68]} rotation={[Math.PI / 2, 0, 0]}>
+          <coneGeometry args={[0.08, 0.8, 8]} />
           <meshBasicMaterial color={COLORS.purpleNeon} />
         </mesh>
 
@@ -113,8 +176,8 @@ export function RivalCar() {
         <pointLight
           position={[0, 0.1, 0]}
           color={COLORS.purpleNeon}
-          intensity={3.0}
-          distance={4.5}
+          intensity={3.2}
+          distance={5.0}
         />
       </group>
     </group>
