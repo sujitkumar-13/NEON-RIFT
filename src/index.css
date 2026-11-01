@@ -1,0 +1,46 @@
+/* NEON RIFT - Core Global Styles */
+:root {
+  --color-bg-dark: #07080d;
+  --color-graphite: #0c0f17;
+  --color-graphite-light: #161b28;
+  --color-cyan: #00f3ff;
+  --color-cyan-glow: rgba(0, 243, 255, 0.45);
+  --color-purple: #b026ff;
+  --color-purple-glow: rgba(176, 38, 255, 0.45);
+  --color-magenta: #ff007f;
+  --color-hazard: #ff1744;
+  --color-warning: #ffb703;
+  --color-shield-green: #00ff88;
+  --font-title: 'Orbitron', 'Segoe UI', system-ui, sans-serif;
+  --font-hud: 'Rajdhani', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--color-bg-dark);
+  color: #fff;
+  font-family: var(--font-hud);
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: var(--font-title);
+  outline: none;
+  transition: all 0.2s ease;
+}
